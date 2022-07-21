@@ -1,0 +1,11 @@
+---
+plugin: controllerx
+#host: ''
+#username: admin
+#password: redhat123
+#validate_certs: false
+#inventory_id: 6
+#groups_filter: 'platform_linux'
+#hosts_filter: host1
+#hostgroups_filter: "^meta-hostgroup_cdtgrt$"
+#include_metadata: true
