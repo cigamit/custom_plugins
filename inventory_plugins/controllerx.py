@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Ansible Project
+# Copyright (c) 2022 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -46,13 +46,13 @@ DOCUMENTATION = '''
             env:
                 - name: CONTROLLER_PASSWORD
             required: True
-        inventory_id:
+        inventory_name:
             description:
                 - The ID of the Ansible Controller inventory that you wish to import.
                 - This is allowed to be either the inventory primary key or its named URL slug.
                 - Primary key values will be accepted as strings or integers, and URL slugs must be strings.
                 - Named URL slugs follow the syntax of "inventory_name++organization_name".
-            type: raw
+            type: string
             env:
                 - name: CONTROLLER_INVENTORY
             required: True
@@ -96,7 +96,8 @@ DOCUMENTATION = '''
             default: False
             version_added: "2.8"
     Notes:
-      - 2022-07-20 -- Scott Parker (@gearboxscott) Modified to work with AAP Controller
+      - 2022-07-20 -- Scott Parker (@gearboxscott) Modified to work with AAP Controller.
+      - 2022-07-22 -- Scott Parker (@gearboxscott) Modified to query inventory by name.
 '''
 
 EXAMPLES = '''
@@ -106,10 +107,10 @@ EXAMPLES = '''
 # Example for using controllerx_inventory.yml file
 
 plugin: controllerx
-host: your_ansible_tower_server_network_address
-username: your_ansible_tower_username
-password: your_ansible_tower_password
-inventory_id: the_ID_of_targeted_ansible_tower_inventory
+host: your_ansible_controller_server_network_address
+username: your_ansible_controller_username
+password: your_ansible_controller_password
+inventory_name: the_name_of_targeted_ansible_controller_inventory_to_be_filtered
 hosts_filter: a Python regex to filter hosts
 hostgroups_filter: a Python regex to filter hosts based on their group(s)
 groups_filter: a Python regex to filter groups (and hosts if hostgroups_filter isn't defined)
@@ -157,14 +158,14 @@ except ImportError:
 class InventoryModule(BaseInventoryPlugin):
     NAME = 'controllerx'
     # Stays backward compatible with Controller inventory script.
-    # If the user supplies '@tower_inventory' as path, the plugin will read from environment variables.
+    # If the user supplies '@controller_inventory' as path, the plugin will read from environment variables.
     no_config_file_supplied = False
 
-    def make_request(self, request_handler, tower_url):
+    def make_request(self, request_handler, controller_url):
         """Makes the request to given URL, handles errors, returns JSON
         """
         try:
-            response = request_handler.get(tower_url)
+            response = request_handler.get(controller_url)
         except (ConnectionError, urllib_error.URLError, socket.error, httplib.HTTPException) as e:
             n_error_msg = 'Connection to remote host failed: {err}'.format(err=to_native(e))
             # If Controller gives a readable error message, display that message to the user.
@@ -194,30 +195,38 @@ class InventoryModule(BaseInventoryPlugin):
             self._read_config_data(path)
         # Read inventory from Controller server.
         # Note the environment variables will be handled automatically by InventoryManager.
-        tower_host = self.get_option('host')
-        if not re.match('(?:http|https)://', tower_host):
-            tower_host = 'https://{tower_host}'.format(tower_host=tower_host)
+        controller_host = self.get_option('host')
+        if not re.match('(?:http|https)://', controller_host):
+            controller_host = 'https://{controller_host}'.format(controller_host=controller_host)
 
         request_handler = Request(url_username=self.get_option('username'),
                                   url_password=self.get_option('password'),
                                   force_basic_auth=True,
                                   validate_certs=self.get_option('validate_certs'))
 
-        # validate type of inventory_id because we allow two types as special case
-        inventory_id = self.get_option('inventory_id')
-        if isinstance(inventory_id, int):
-            inventory_id = to_text(inventory_id, nonstring='simplerepr')
+        # validate type of inventory_name because we allow two types as special case
+        inventory_name = self.get_option('inventory_name')
+        if isinstance(inventory_name, str):
+            inventory_id = to_text(inventory_name, nonstring='simplerepr')
         else:
             try:
-                inventory_id = ensure_type(inventory_id, 'str')
+                inventory_name = ensure_type(inventory_name, 'str')
             except ValueError as e:
                 raise AnsibleOptionsError(
-                    'Invalid type for configuration option inventory_id, '
+                    'Invalid type for configuration option inventory_name, '
                     'not integer, and cannot convert to string: {err}'.format(err=to_native(e))
                 )
+
+        # get the inventory id by name
+        inventory_name = inventory_name.replace(' ', '%20')
+        inventory_name_url = '/api/v2/inventories/?name={inv_name}'.format(inv_name=inventory_name)
+        inventory_name_url = urljoin(controller_host, inventory_name_url)
+        inventory_data = self.make_request(request_handler, inventory_name_url)
+        inventory_id = str( inventory_data['results'][0]['id'])
+
         inventory_id = inventory_id.replace('/', '')
-        inventory_url = '/api/v2/inventories/{inv_id}/script/?hostvars=1&towervars=1&all=1'.format(inv_id=inventory_id)
-        inventory_url = urljoin(tower_host, inventory_url)
+        inventory_url = '/api/v2/inventories/{inv_id}/script/?hostvars=1&controllervars=1&all=1'.format(inv_id=inventory_id)
+        inventory_url = urljoin(controller_host, inventory_url)
 
         # gather and compile the different filter options
         hosts_filter = self.get_option('hosts_filter')
@@ -285,13 +294,13 @@ class InventoryModule(BaseInventoryPlugin):
 
         # Fetch extra variables if told to do so
         if self.get_option('include_metadata'):
-            config_url = urljoin(tower_host, '/api/v2/config/')
+            config_url = urljoin(controller_host, '/api/v2/config/')
             config_data = self.make_request(request_handler, config_url)
             server_data = {}
             server_data['license_type'] = config_data.get('license_info', {}).get('license_type', 'unknown')
             for key in ('version', 'ansible_version'):
                 server_data[key] = config_data.get(key, 'unknown')
-            self.inventory.set_variable('all', 'tower_metadata', server_data)
+            self.inventory.set_variable('all', 'controller_metadata', server_data)
 
         # Clean up the inventory.
         self.inventory.reconcile_inventory()
