@@ -15,7 +15,7 @@ plugin: controllerx
 # validate_certs: false
 
 # Add Inventory ID Number from AAP Controller (required)
-# inventory_id: 6
+# inventory_name: <name of existing inventory in ansible controller to be filtered>
 
 # Make extra requests to provide all group vars with metadata about the source Ansible Controller host. (default: false)
 # include_metadata: true

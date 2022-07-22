@@ -1,10 +1,10 @@
 ---
 plugin: controllerx
-#host: ''
-#username: admin
-#password: redhat123
+#host: '<ansible controller hostname or ip address'
+#username: <ansible controller username>
+#password: <ansible controller password>
 #validate_certs: false
-#inventory_id: 6
+#inventory_id: <name of existing inventory in Ansible Controller to be filtered>
 #groups_filter: 'platform_linux'
 #hosts_filter: host1
 #hostgroups_filter: "^meta-hostgroup_cdtgrt$"
