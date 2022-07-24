@@ -3,19 +3,19 @@
 plugin: controllerx
 
 # hostname or IP Address of AAP Controller (required)
-host: <hostname or ipaddress>
+host: <controller hostname or ip address>
 
 # username to access AAP Controller (required)
-username: <controller account>
+username: <controller username>
 
 # password to access AAP Controller (required)
-password: <controller account password>
+password: <controller password>
 
 # Enable or Disable SSL Certificate Verification (default: true)
 validate_certs: false
 
 # Add Inventory ID Number from AAP Controller (required)
-inventory_id: 6
+inventory_name: <name of existing in ansible controller inventory to be filtered>
 
 # Make extra requests to provide all group vars with metadata about the source Ansible Controller host. (default: false)
 include_metadata: true
@@ -24,7 +24,7 @@ include_metadata: true
 # A Python regex to filter hosts, only matching hosts will be left.
 # If hostgroups_filter isn't defined, it acts as such, i.e. only hosts in those groups will remain.
 # Notice that empty groups won't be filtered out.
-groups_filter: 'platform_linux'
+groups_filter: '<regex expression>'
 
 # Hosts from dynamic or static inventory already in AAP Controller (optional).
 # A Python regex to filter hosts, only matching hosts will be left.

@@ -25,7 +25,7 @@ host_key_checking = False
 inventory_plugins = ./
 
 [inventory]
-enable_plugins = yaml, towerx, auto
+enable_plugins = yaml, controllerx, auto
 ```
 
 Settings Explained:
@@ -33,7 +33,7 @@ Settings Explained:
 | Setting | Description |
 | :-- | :-- |
 | `inventory_plugins = ./` | where to find the inventory plugins in this repository.
-| `enable_plugins = yaml, towerx, auto` | enable the plugins needed under the `[inventory]` section.
+| `enable_plugins = yaml, controllerx, auto` | enable the plugins needed under the `[inventory]` section.
 
 > NOTE and WARNING | Do not filter this `ansible.cfg` with `.gitignore`. It has be included in the repository.
 
@@ -54,7 +54,7 @@ Every plugin comes variables or settings that are needed to make it work correct
 | `password:` | `CONTROLLER_PASSWORD` | string | true | none | Ansible Controller user account's password |
 | `validate_certs:` | `CONTROLLER_VERIFY_SSL` | boolean | false | `true` | Specify whether Ansible should verify the SSL certificate of Ansible Controller host. |
 | `include_metadata:` | `METADATA_ENABLED` | boolean | false | `false` | Make extra requests to provide all group vars with metadata about the source Ansible Controller host. |
-| `inventory_id:` | `CONTROLLER_INVENTORY` | raw | true | none | The ID number of the Ansible Controller's Invnntory to be filtered |
+| `inventory_name:` | `CONTROLLER_INVENTORY` | raw | true | none | The name of the existing Ansible Controller's Inventory to be filtered |
 | `hosts_filter:` | `HOSTS_FILTER` | string | false | none | A Python regex to filter hosts, only matching hosts will be left |
 | `hostgroups_filter:` | `HOSTGROUPS_FILTER` | string | false | none | A Python regex to filter hosts, only hosts in matching groups will be left.<br>This regex is expected to be a sub-set of the groups_filter or results will be wrong. |
 | `groups_filter:` | `GROUPS_FILTER` | string | false | none | A Python regex to filter groups, only matching groups will be left.<br>If hostgroups_filter isn't defined, it acts as such, i.e. only hosts in those groups will remain.<br>Notice that empty groups won't be filtered out.
@@ -68,7 +68,7 @@ export CONTROLLER_HOST='redacted'
 export CONTROLLER_USERNAME='redacted'
 export CONTROLLER_PASSWORD='redacted'
 export CONTROLLER_VERIFY_SSL='false'
-export CONTROLLER_INVENTORY='6'
+export CONTROLLER_INVENTORY='name of the inventory to be filtered'
 export METADATA_ENABLED='true'
 export GROUP_FILTER='platform_linux
 ```
@@ -82,10 +82,10 @@ Before you execute the following commands, make sure this file is in your plugin
 
 ```ini
 plugin: controllerx
-host: your_ansible_tower_server_network_address
-username: your_ansible_tower_username
-password: your_ansible_tower_password
-inventory_id: the_ID_of_targeted_ansible_tower_inventory
+host: your_ansible_controller_server_network_address
+username: your_ansible_controller_username
+password: your_ansible_controller_password
+inventory_name: the_ID_of_targeted_ansible_controller_inventory
 hosts_filter: a Python regex to filter hosts
 hostgroups_filter: a Python regex to filter hosts based on their group(s)
 groups_filter: a Python regex to filter groups (and hosts if hostgroups_filter isn't defined)
@@ -215,7 +215,7 @@ credential_types:
           type: boolean
           label: Include Metadata
           default: true
-        - id: inventory_id
+        - id: inventory_name
           type: string
           label: Inventory ID
       required:
@@ -232,7 +232,7 @@ credential_types:
         HOSTGROUPS_FILTER: '{{ hostgroups_filter }}'
         CONTROLLER_PASSWORD: '{{ password }}'
         CONTROLLER_USERNAME: '{{ username }}'
-        CONTROLLER_INVENTORY: '{{ inventory_id }}'
+        CONTROLLER_INVENTORY: '{{ inventory_name }}'
         CONTROLLER_VERIFY_SSL: '{{ ssl_verify }}'
     natural_key:
       name: inventory_filter
@@ -252,7 +252,7 @@ credentials:
       username: <redacted>
       ssl_verify: false
       hosts_filter: ""
-      inventory_id: "6"
+      inventory_name: "<name of existing inventory in Ansible Controller to be filtered"
       groups_filter: platform_linux
       include_metadata: true
       hostgroups_filter: ""
@@ -383,4 +383,4 @@ GNU General Public License v3.0 or later.
 ## Author Information
 ---
 
-- Scott Parker (sparker@redhat.com) -- Created README.md and modified original `towerx` plugin to work with controller.
+- Scott Parker (sparker@redhat.com) -- Created README.md and modified original `towerx` plugin to work with controller, now called `controllerx`.

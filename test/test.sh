@@ -4,7 +4,7 @@ export CONTROLLER_HOST='redacted'
 export CONTROLLER_USERNAME='redacted'
 export CONTROLLER_PASSWORD='redacted'
 export CONTROLLER_VERIFY_SSL='false'
-export CONTROLLER_INVENTORY='6'
+export CONTROLLER_INVENTORY='name of existing inventory in Ansible Controller to be filtered'
 export METADATA_ENABLED='true'
 export GROUP_FILTER='platform_linux'
 
